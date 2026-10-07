@@ -70,7 +70,10 @@ def object_animations(obj, path):
     if obj.animation_data:
         for track in obj.animation_data.nla_tracks:
             if track.strips:
-                animations[track.name] = [(track, path, typ)]
+                # an object can have several tracks with the same name
+                if track.name not in animations:
+                    animations[track.name] = []
+                animations[track.name].append((track, path, typ))
         # if nla_tracks exist, then action will be an nla track that has been
         # opened for tweaking, so export action only if there are no nla tracks
         if not animations and obj.animation_data.action:
@@ -288,6 +291,9 @@ def transform_curves(muarm):
                         rotation[1].keys[i].tangent[j] = -tan.x
                         rotation[2].keys[i].tangent[j] = -tan.y
                         rotation[3].keys[i].tangent[j] = -tan.z
+        # the curves have been transformed, so they must not be seen again
+        del bone.curves
+    muarm.animated_bones.clear()
 
 def make_animations(mu, animations, anim_root):
     anim = MuAnimation()
@@ -308,6 +314,7 @@ def make_animations(mu, animations, anim_root):
         clip.wrapMode = 1
         #print(f"Creating clip: {clip_name}") # Debug clip animations
         
+        armatures = []
         for data in animations[clip_name]:
             track, path, typ = data
             muobj = mu.object_paths.get(path)
@@ -322,8 +329,12 @@ def make_animations(mu, animations, anim_root):
                     curve_data = make_curve(mu, muobj, curve, path, typ)
                     if curve_data:
                         clip.curves.append(curve_data)
-                if hasattr(muobj, "animated_bones"):
-                    transform_curves(muobj)
+                if hasattr(muobj, "animated_bones") and muobj not in armatures:
+                    armatures.append(muobj)
+        # a bone's curves may be spread over several tracks, so transform
+        # them only after all the tracks of the clip have been collected
+        for muarm in armatures:
+            transform_curves(muarm)
         anim.clips.append(clip)
     
     if default_clip_name:
