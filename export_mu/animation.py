@@ -19,6 +19,8 @@
 
 # <pep8 compliant>
 
+from math import pi
+
 import bpy
 from mathutils import Vector, Quaternion
 
@@ -171,9 +173,9 @@ property_map = {
         ("m_Intensity", 1/light_power, 2),
     ),
     "rotation_euler":(
-        ("localEulerAnglesRaw.x", 1, 0),
-        ("localEulerAnglesRaw.z", 1, 0),
-        ("localEulerAnglesRaw.y", 1, 0),
+        ("localEulerAnglesRaw.x", -180 / pi, 0),
+        ("localEulerAnglesRaw.z", -180 / pi, 0),
+        ("localEulerAnglesRaw.y", -180 / pi, 0),
     )
 }
 
